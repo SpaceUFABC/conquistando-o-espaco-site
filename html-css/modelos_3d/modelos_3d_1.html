@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPACE - Modelos 3D</title>
+    <link rel="shortcut icon" href="../imagens/logo-space.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+    </style>
+</head>
+<body>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+
+    <div id="tela">
+        <div id="bloco-texto">
+            <h1 class="titulo">14-BIS</h1>
+            <div id="bloco-modelo" style="overflow: hidden;">
+                <model-viewer 
+                src="../modelos/14bis.glb"
+                ios-src="../modelos/IOS/14bis.usdz"
+                auto-rotate
+                auto-rotate-speed="-1" 
+                interaction-prompt="none"
+                disable-zoom
+                camera-controls
+                camera-orbit="180deg 75deg"
+                auto-rotate-delay=0
+                exposure="0.25"
+                shadow-intensity="0.5"
+                rotation-per-second="15deg">
+                    <div class="progress-bar hide" slot="progress-bar"></div>
+                </model-viewer>
+            </div>
+            <p class="texto">Em 23 de outubro de 1906, em Paris, Alberto Santos Dumont fazia seu primeiro voo no 14-Bis.</p>
+        </div>
+        <div class="menu_navegacao">
+            <a href="../index.html" target="_self" rel="next">
+                <button class="botao_menu_navegacao">VOLTAR</button>
+            </a>
+            <a href="../modelos_3d/modelos_3d_2.html" target="_self" rel="next">
+                <button class="botao_menu_navegacao">PROSSEGUIR</button>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
