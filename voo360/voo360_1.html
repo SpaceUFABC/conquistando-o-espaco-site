@@ -6,7 +6,6 @@
     <title>SPACE - Modelos 3D</title>
     <link rel="shortcut icon" href="../imagens/logo-space.ico" type="image/x-icon">
     <link rel="stylesheet" href="../style.css">
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
     <style>
     </style>
 </head>
@@ -14,43 +13,17 @@
     <div id="tela">
         <div id="bloco-ra" style="overflow: hidden;">
             <h1 class="titulo-ra">CONTROLE DE UM AVIÃO</h1>
-            <model-viewer 
-                id="model-viewer-ra"
-                src="../modelos/voo360/controle_aviao2.glb"
-                ios-src=""
-                interaction-prompt="none"
-                disable-zoom
-                camera-controls
-                camera-orbit="180deg 70deg"
-                exposure="0.25"
-                shadow-intensity="0.5"
-                ar>
-                <div class="progress-bar hide" slot="progress-bar"></div>
-            </model-viewer>
+
+            <canvas class="threejs" ></canvas>
+
             <div class="menu_animacao">
                 <button class="botao_animacao" id="botao_animacao_arfagem" nome-anim="Profundor_Arfagem">Arfagem</button>
                 <button class="botao_animacao" id="botao_animacao_rolamento" nome-anim="AileronDireito_Rolamento">Rolamento</button>
                 <button class="botao_animacao" id="botao_animacao_guinada" nome-anim="Leme_Guinada">Guinada</button>   
             </div>
             
+          <script type="module" src="../javascript/main.js"></script>
         </div>
-        
-
     </div>
-
-    <script>
-    const modelViewer = document.getElementById("model-viewer-ra");
-
-    document.querySelectorAll('button[nome-anim]').forEach(button => {
-        button.addEventListener('click', () => {
-        const anim = button.getAttribute('nome-anim');
-        
-        modelViewer.animationName = anim;
-        modelViewer.timeScale = 4.0;
-        modelViewer.autoplay = false;
-        modelViewer.play();
-        });
-    });
-    </script>
 </body>
 </html>
