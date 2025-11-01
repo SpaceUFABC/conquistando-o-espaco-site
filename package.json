@@ -1,0 +1,30 @@
+{
+  "name": "conquistando-o-espaco",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.1.12"
+  },
+  "dependencies": {
+    "three": "^0.179.1"
+  },
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SpaceUFABC/conquistando-o-espaco-site.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SpaceUFABC/conquistando-o-espaco-site/issues"
+  },
+  "homepage": "https://github.com/SpaceUFABC/conquistando-o-espaco-site#readme"
+}
