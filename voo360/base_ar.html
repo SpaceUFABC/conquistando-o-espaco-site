@@ -7,5 +7,31 @@
 <body>
     <canvas class="webgl"></canvas>
     <script type="module" src="../javascript/base_ar.js"></script>
+
+     <div id="popup">
+        <div class="popup-content">
+            <span class="close-button">&times;</span>
+            <h2>Hello, World!</h2>
+            <p>This is a custom pop-up box.</p>
+            <button id="startAR">Take Action</button>
+        </div>
+    </div>
 </body>
+<style>
+    #popup {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(0,0,0,0.4); /* Black background with opacity */
+    /* Use flexbox to center the content easily */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+</style>
 </html>

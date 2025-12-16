@@ -12,6 +12,11 @@ class sceneAR {
             width: window.innerWidth,
             height: window.innerHeight
         }
+
+        this.arPopup = document.getElementById("popup");
+        this.arButton = document.getElementById("startAR");
+
+        this.arPopup.style.display = "none";
     }
 
     sceneInit() {
@@ -33,6 +38,7 @@ class sceneAR {
             const root = glb.scene;
             this.scene.add(root);
             console.log("Done loading GLB")
+            this.arPopup.style.display = "flex";
         }, undefined, (error) => {console.log("Error loading the model: " + error);});
     }
 
@@ -45,12 +51,12 @@ class sceneAR {
         console.log(this.renderer);
     }
 
-    createARButton() {
-        this.renderer.xr.enabled = true;
-        this.renderer.xr.setSession(null);
+    startAR() {
+        const arPopup = document.getElementById("popup");
+        arPopup.style.display = "none";
 
         if (navigator.xr) {
-            navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['local-floor'] })
+            navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['local-floor', 'hit-test'] })
                 .then((session) => {
                     this.renderer.xr.setSession(session);
                 })
@@ -59,40 +65,15 @@ class sceneAR {
                 });
         } else {
             console.error('WebXR not supported');
-        }
+        };
 
-        // const button = document.createElement('button');
-        // button.style.position = 'absolute';
-        // button.style.bottom = '20px';
-        // button.style.left = '50%';
-        // button.style.transform = 'translateX(-50%)';
-        // button.style.padding = '10px 20px';
-        // button.style.fontSize = '16px';
-        // button.style.backgroundColor = '#007bff';
-        // button.style.color = '#fff';
-        // button.style.border = 'none';
-        // button.style.borderRadius = '5px';
-        // button.style.cursor = 'pointer';
-        // button.textContent = 'Enter AR';
+    }
 
-        // button.addEventListener('click', () => {
-        //     this.renderer.xr.enabled = true;
-        //     this.renderer.xr.setSession(null);
+    createARButton() {
+        this.renderer.xr.enabled = true;
+        this.renderer.xr.setSession(null);
 
-        //     if (navigator.xr) {
-        //         navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['local-floor'] })
-        //             .then((session) => {
-        //                 this.renderer.xr.setSession(session);
-        //             })
-        //             .catch((error) => {
-        //                 console.error('Failed to start AR session:', error);
-        //             });
-        //     } else {
-        //         console.error('WebXR not supported');
-        //     }
-        // });
-
-        // document.body.appendChild(button);
+        this.arButton.addEventListener('click', this.startAR);
     }
 
     animate(){

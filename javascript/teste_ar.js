@@ -18,7 +18,6 @@ const loader = new GLTFLoader();
 loader.load("../modelos/juno.glb", function(glb){
     console.log(glb);
     const root = glb.scene;
-    root.position.set(3, -2, -10)
     scene.add(root);
 }, function(xhr){}, function(error){console.log("Error loading the model")})
 
