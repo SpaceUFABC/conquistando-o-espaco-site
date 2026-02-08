@@ -25,9 +25,13 @@ class sceneAR {
         light1.position.set(0, 10, 0);
         this.scene.add(light1);
 
+        // Add ambient light for better AR visibility
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(ambientLight);
+
         // Camera setup
-        this.camera = new THREE.PerspectiveCamera(75, this.sizes.width/this.sizes.height, 0.5, 100);
-        this.camera.position.z = 5; // mover para poder enxergar o objeto
+        this.camera = new THREE.PerspectiveCamera(75, this.sizes.width/this.sizes.height, 0.1, 100);
+        // Don't set fixed position - AR will control the camera
         this.scene.add(this.camera);
     }
 
@@ -73,14 +77,14 @@ class sceneAR {
         this.renderer.xr.enabled = true;
         this.renderer.xr.setSession(null);
 
-        this.arButton.addEventListener('click', this.startAR);
+        this.arButton.addEventListener('click', () => this.startAR());
     }
 
     animate(){
-        this.renderer.setAnimationLoop(this.render.bind(this));
+        this.renderer.setAnimationLoop((time, frame) => this.render(time, frame));
     }
 
-    render(){
+    render(time, frame){
         this.renderer.render(this.scene, this.camera);
     }
 }
