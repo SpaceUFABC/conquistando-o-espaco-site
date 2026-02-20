@@ -13,10 +13,21 @@ class sceneAR {
             height: window.innerHeight
         }
 
+        // Get elements
         this.arPopup = document.getElementById("popup");
         this.arButton = document.getElementById("startAR");
-
         this.arPopup.style.display = "none";
+
+        this.objectIndex = 0;
+
+        // Create overlay
+        this.overlay = document.createElement('div');
+        this.overlay.id = 'ar-overlay';
+        this.overlay.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; height: 100vh;">
+                <button> < </button>
+                <button> > </button>
+            </div>`;
     }
 
     sceneInit() {
@@ -60,7 +71,10 @@ class sceneAR {
         arPopup.style.display = "none";
 
         if (navigator.xr) {
-            navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['local-floor', 'hit-test'] })
+            navigator.xr.requestSession('immersive-ar', {
+                requiredFeatures: ['dom-overlay', 'local-floor', 'hit-test'],
+                domOverlay: { root: this.overlay}
+            })
                 .then((session) => {
                     this.renderer.xr.setSession(session);
                 })
@@ -89,6 +103,11 @@ class sceneAR {
     }
 }
 
+
+const objectList = [
+    ["../modelos/juno.glb", ["Anim1", "Anim2", "Anim3"]],
+    ["../modelos/14bis.glb", ["Anim1", "Anim2", "Anim3"]]
+];
 
 const sizes = {
     width: window.innerWidth,
