@@ -7,7 +7,6 @@
     <link rel="shortcut icon" href="../imagens/logo-space.ico" type="image/x-icon">
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* High-altitude flight environment — deep navy zenith fading to a wispy cloud layer */
         #bloco-ra {
             background:
                 radial-gradient(ellipse 480px 320px at 80% 12%, rgba(255, 230, 180, 0.18) 0%, transparent 70%),
@@ -33,7 +32,6 @@
             z-index: 1;
         }
 
-        /* Educational label that appears during a motion */
         #motion-label {
             position: absolute;
             top: 70px;
@@ -68,39 +66,6 @@
             from { transform: rotate(0deg); }
             to   { transform: rotate(360deg); }
         }
-
-        /* Glass-morphism animation control buttons (matches site theme) */
-        .botao_animacao {
-            background: rgba(34, 7, 105, 0.92);
-            color: #ffffff;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 10px;
-            padding: 10px 24px;
-            font-family: "Ubuntu-B", sans-serif;
-            font-size: clamp(11pt, 1.6vw, 14pt);
-            letter-spacing: 1px;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            transition: transform 0.15s ease, background 0.15s ease;
-            min-width: 160px;
-        }
-        .botao_animacao:hover:not(:disabled) {
-            background: rgba(80, 40, 180, 0.95);
-            transform: translateY(-2px);
-        }
-        .botao_animacao:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        .botao_animacao.ativo {
-            background: rgba(120, 60, 220, 0.98);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-        .botao_animacao:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-        }
     </style>
 </head>
 <body>
@@ -134,6 +99,7 @@
                 <button class="botao_animacao" id="botao_animacao_arfagem"   nome-anim="Profundor_Arfagem">Arfagem</button>
                 <button class="botao_animacao" id="botao_animacao_rolamento" nome-anim="AileronDireito_Rolamento">Rolamento</button>
                 <button class="botao_animacao" id="botao_animacao_guinada"   nome-anim="Leme_Guinada">Guinada</button>
+                <button class="botao_animacao" id="botao_parar" style="display:none;">Parar</button>
             </div>
         </div>
 
@@ -193,18 +159,14 @@
         const T_CAM_RETURN_MS = 500;
         const T_UNLOCK_MS     = 1100;
 
-        // If the visual is wrong (left aileron moves in same direction as right),
-        // flip this to false — applies right's delta directly instead of inverting.
-        const LEFT_AILERON_INVERT_DELTA = true;
-
         // -----------------------------------------------------------------
         // State
         // -----------------------------------------------------------------
         let activeMotion = null;
+        let leftAileron = null;
+        let leftBaseQuat = null;
         let rightAileron = null;
-        let leftAileron  = null;
         let rightBaseQuat = null;
-        let leftBaseQuat  = null;
 
         const startTime = performance.now();
 
@@ -213,80 +175,68 @@
         mv.orientation  = '0deg 0deg 0deg';
 
         // -----------------------------------------------------------------
-        // Access the underlying Three.js scene (model-viewer 4.x)
+        // Discover aileron scene nodes after GLB loads.
+        // The GLB animation "AileronDireito|Rolamento|Base Layer" only drives
+        // the RIGHT aileron. We mirror its rotation onto the left aileron
+        // each frame so both move in opposite directions (real roll behavior).
         // -----------------------------------------------------------------
-        function findSceneRoot() {
+        function getSceneRoot() {
+            // Try mv.model first (model-viewer 4.x official API)
             if (mv.model && typeof mv.model.traverse === 'function') return mv.model;
+            // Fallback: walk Symbols to find the Three.js scene
             const syms = Object.getOwnPropertySymbols(mv);
             for (const s of syms) {
-                const v = mv[s];
-                if (v && typeof v.traverse === 'function') return v;
-                if (v && v.scene && typeof v.scene.traverse === 'function') return v.scene;
-                if (v && v.modelContainer && typeof v.modelContainer.traverse === 'function') return v.modelContainer;
+                try {
+                    const v = mv[s];
+                    if (!v || typeof v !== 'object') continue;
+                    if (typeof v.traverse === 'function') return v;
+                    if (v.scene && typeof v.scene.traverse === 'function') return v.scene;
+                    if (v.modelContainer && typeof v.modelContainer.traverse === 'function') return v.modelContainer;
+                    // model-viewer 4.x often wraps in a "Scene" class
+                    const keys = Object.getOwnPropertyNames(v);
+                    for (const k of keys) {
+                        const prop = v[k];
+                        if (prop && typeof prop.traverse === 'function') return prop;
+                    }
+                    const innerSyms = Object.getOwnPropertySymbols(v);
+                    for (const si of innerSyms) {
+                        const iv = v[si];
+                        if (iv && typeof iv.traverse === 'function') return iv;
+                    }
+                } catch(e) {}
             }
             return null;
         }
 
-        // -----------------------------------------------------------------
-        // Discover right + left aileron nodes
-        // Strategy: walk the scene, find all nodes whose name contains 'aileron'
-        // (case-insensitive), split into right-side and left-side by language hints.
-        // Prefer Mesh nodes over Group nodes (better-defined pivots).
-        // Snapshot each one's resting quaternion so we can compute deltas later.
-        // -----------------------------------------------------------------
         function detectAilerons() {
-            const root = findSceneRoot();
-            if (!root) {
-                console.warn('[Voo 360] Could not access scene root.');
-                return;
-            }
+            const root = getSceneRoot();
+            if (!root) return false;
 
-            const allNamed = [];
-            const rightCands = [];
-            const leftCands = [];
             root.traverse(n => {
                 if (!n || !n.name) return;
-                allNamed.push({ name: n.name, type: n.type, isMesh: !!n.isMesh });
                 const lname = n.name.toLowerCase();
                 if (!lname.includes('aileron')) return;
 
-                if (lname.includes('dir') || lname.includes('right') || lname.includes('rt_')) {
-                    rightCands.push(n);
-                } else if (lname.includes('esq') || lname.includes('left') || lname.includes('lt_')) {
-                    leftCands.push(n);
+                if (lname.includes('dir') || lname.includes('right')) {
+                    if (!rightAileron || !n.isMesh) {
+                        rightAileron = n;
+                        rightBaseQuat = n.quaternion.clone();
+                    }
+                } else if (lname.includes('esq') || lname.includes('left')) {
+                    if (!leftAileron || !n.isMesh) {
+                        leftAileron = n;
+                        leftBaseQuat = n.quaternion.clone();
+                    }
                 }
             });
 
-            console.log('[Voo 360] All scene nodes:', allNamed);
-            console.log('[Voo 360] Right aileron candidates:', rightCands.map(n => `${n.name} (${n.type})`));
-            console.log('[Voo 360] Left  aileron candidates:', leftCands.map(n => `${n.name} (${n.type})`));
-
-            const pick = arr => (arr.find(n => n.isMesh) || arr[0] || null);
-            const r = pick(rightCands);
-            const l = pick(leftCands);
-
-            if (r) {
-                rightAileron = r;
-                rightBaseQuat = r.quaternion.clone();
-                console.log(`[Voo 360] Right aileron node: "${r.name}" (${r.type})`);
-            } else {
-                console.warn('[Voo 360] Right aileron node not found — cannot mirror to left.');
-            }
-            if (l) {
-                leftAileron = l;
-                leftBaseQuat = l.quaternion.clone();
-                console.log(`[Voo 360] Left aileron node:  "${l.name}" (${l.type})`);
-            } else {
-                console.warn('[Voo 360] Left aileron node not found — left side will stay static.');
-            }
+            return !!(rightAileron && leftAileron);
         }
 
         mv.addEventListener('load', () => {
-            console.log('[Voo 360] GLB loaded. Available animations:', mv.availableAnimations);
-            detectAilerons();
-            // model-viewer wires the scene graph just after the load event sometimes
-            if (!rightAileron || !leftAileron) setTimeout(detectAilerons, 250);
-            if (!rightAileron || !leftAileron) setTimeout(detectAilerons, 750);
+            if (!detectAilerons()) {
+                setTimeout(() => { if (!detectAilerons()) setTimeout(detectAilerons, 750); }, 300);
+            }
         });
 
         function findAnimation(buttonName, available) {
@@ -298,31 +248,11 @@
             return available.find(a => a.toLowerCase().includes(tail.toLowerCase())) || null;
         }
 
-        // -----------------------------------------------------------------
-        // Mirror the right aileron's CURRENT rotation onto the left aileron.
-        //
-        //   rightCurrent = rightBase * dQ      (the GLB applies dQ to right)
-        //   dQ           = rightBase⁻¹ * rightCurrent
-        //   leftCurrent  = leftBase * dQ⁻¹     (mirror — opposite direction)
-        //
-        // We don't manually pick an axis or a magnitude — we copy whatever the
-        // artist baked into the right-aileron animation, and apply the inverse
-        // to the left. This guarantees lockstep timing with the GLB clip and
-        // avoids the wrong-axis / wrong-magnitude artifacts from before.
-        // -----------------------------------------------------------------
-        function applyMirrorToLeftAileron() {
+        // Mirror right aileron rotation onto left (inverted delta = opposite direction)
+        function mirrorRightToLeft() {
             if (!rightAileron || !leftAileron || !rightBaseQuat || !leftBaseQuat) return;
-
-            // dQ = rightBase⁻¹ * rightCurrent
-            const dQ = rightBaseQuat.clone();
+            const dQ = rightBaseQuat.clone().invert().multiply(rightAileron.quaternion);
             dQ.invert();
-            dQ.multiply(rightAileron.quaternion);
-
-            // For the mirrored side, apply the inverse delta
-            if (LEFT_AILERON_INVERT_DELTA) {
-                dQ.invert();
-            }
-
             leftAileron.quaternion.copy(leftBaseQuat).multiply(dQ);
         }
 
@@ -332,19 +262,32 @@
             }
         }
 
+        const stopBtn = document.getElementById('botao_parar');
+
+        function stopAnimation() {
+            if (!activeMotion) return;
+            mv.pause();
+            mv.currentTime = 0;
+            motionLabel.classList.remove('visible');
+            if (activeMotion.axis === 'roll') resetLeftAileron();
+            activeMotion.btn.classList.remove('ativo');
+            activeMotion.bodyDone = true;
+            activeMotion = null;
+            buttons.forEach(b => { b.disabled = false; });
+            stopBtn.style.display = 'none';
+            mv.cameraOrbit = CAMERA_DEFAULT;
+        }
+
+        stopBtn.addEventListener('click', stopAnimation);
+
         // -----------------------------------------------------------------
-        // Render loop
-        // - Idle wobble: small sine on each axis
-        // - Active motion: BODY angle is driven by mv.currentTime (locked to
-        //   the GLB animation's natural pace)
-        // - Left aileron during Rolamento: mirror right aileron's quaternion
-        //   delta — locked to the same GLB clock by virtue of reading the
-        //   right aileron's actual current rotation.
+        // Render loop — drives body orientation (idle wobble + active motion).
+        // Left aileron mirroring is handled in the 'before-render' event to
+        // ensure it applies AFTER model-viewer's internal animation update.
         // -----------------------------------------------------------------
         function renderLoop(now) {
             const elapsedSec = (now - startTime) / 1000;
 
-            // Idle wobble (always running)
             const idleRoll  = IDLE.roll.amp  * Math.sin((2 * Math.PI / IDLE.roll.period)  * elapsedSec);
             const idlePitch = IDLE.pitch.amp * Math.sin((2 * Math.PI / IDLE.pitch.period) * elapsedSec + 1.3);
             const idleYaw   = IDLE.yaw.amp   * Math.sin((2 * Math.PI / IDLE.yaw.period)   * elapsedSec + 2.7);
@@ -359,10 +302,11 @@
 
                 if (!animStillPlaying && !activeMotion.bodyDone) {
                     activeMotion.bodyDone = true;
+                    mv.pause();
+                    mv.currentTime = 0;
                     motionLabel.classList.remove('visible');
-                    if (activeMotion.axis === 'roll') {
-                        resetLeftAileron();
-                    }
+                    if (activeMotion.axis === 'roll') resetLeftAileron();
+                    stopBtn.style.display = 'none';
                     const am = activeMotion;
                     setTimeout(() => { mv.cameraOrbit = CAMERA_DEFAULT; }, T_CAM_RETURN_MS);
                     setTimeout(() => {
@@ -372,18 +316,14 @@
                     }, T_UNLOCK_MS);
                 } else if (animStillPlaying) {
                     const t = Math.max(0, Math.min(1, ct / dur));
-                    const env = Math.sin(t * Math.PI); // bell: 0 → 1 → 0
+                    const env = Math.sin(t * Math.PI);
 
-                    // Drive body
                     const angle = activeMotion.peak * env;
                     if (activeMotion.axis === 'roll')  r += angle;
                     if (activeMotion.axis === 'pitch') p += angle;
                     if (activeMotion.axis === 'yaw')   y += angle;
 
-                    // Mirror right aileron onto left during Rolamento
-                    if (activeMotion.axis === 'roll') {
-                        applyMirrorToLeftAileron();
-                    }
+                    if (activeMotion.axis === 'roll') mirrorRightToLeft();
                 }
             }
 
@@ -391,6 +331,7 @@
             requestAnimationFrame(renderLoop);
         }
         requestAnimationFrame(renderLoop);
+
 
         // -----------------------------------------------------------------
         // Button → motion trigger
@@ -404,21 +345,21 @@
 
                 buttons.forEach(b => { b.classList.remove('ativo'); b.disabled = true; });
                 btn.classList.add('ativo');
+                stopBtn.style.display = '';
+                stopBtn.disabled = false;
 
                 mv.cameraOrbit = motion.camera;
                 motionText.textContent = motion.label;
                 motionLabel.classList.add('visible');
 
                 const available = mv.availableAnimations || [];
-                const target = findAnimation(animName, available);
 
                 setTimeout(() => {
+                    const target = findAnimation(animName, available);
                     if (target) {
                         mv.animationName = target;
                         mv.currentTime = 0;
                         mv.play({ repetitions: 1 });
-                    } else {
-                        console.warn(`[Voo 360] Animation "${animName}" not found. Available: ${available.join(', ') || '(none)'}`);
                     }
                     activeMotion = {
                         axis: motion.axis,
