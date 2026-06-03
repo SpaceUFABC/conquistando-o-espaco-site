@@ -1,32 +1,11 @@
 @charset "UTF-8";
 
 /* =========================================================
-   CONQUISTANDO O ESPAÇO — Layout redesign (feature branch)
-   - Tema espacial moderno (dark + gradiente de estrelas)
-   - Glass-morphism nos cards
-   - Responsivo (substitui o layout fixo de 600px)
-   - Mantém 100% dos seletores originais para não quebrar HTML
+   CONQUISTANDO O ESPAÇO — Immersive Redesign
+   Snap-scroll sections, cinematic transitions, cursor trail
    ========================================================= */
 
-/* ---------- Reset & base ---------- */
-*,
-*::before,
-*::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-html,
-body {
-    min-height: 100vh;
-    min-height: 100dvh;
-    width: 100%;
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: #0a0e27;
-}
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 @font-face {
     font-family: "Ubuntu-B";
@@ -39,55 +18,908 @@ body {
     font-display: swap;
 }
 
-/* ---------- Container principal ---------- */
-#tela {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    flex-direction: column;
+/* ---------- Design Tokens ---------- */
+:root {
+    --bg: #0a0a0a;
+    --bg-elevated: #111;
+    --bg-card: #161616;
+    --text: #f0ede8;
+    --text-muted: rgba(240, 237, 232, 0.45);
+    --accent: #00a84f;
+    --accent-dim: rgba(0, 168, 79, 0.12);
+    --accent-glow: rgba(0, 168, 79, 0.35);
+    --ufabc-green: #006633;
+    --ufabc-green-light: #00a84f;
+    --border: rgba(255, 255, 255, 0.06);
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'Space Grotesk', sans-serif;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --radius: 16px;
+}
 
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    cursor: none;
+}
+
+body {
+    width: 100%;
+    overflow-x: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    cursor: none;
+}
+
+a, button { cursor: none; }
+
+/* ---------- Custom Cursor ---------- */
+.space-cursor {
+    position: fixed;
+    top: -8px;
+    left: -8px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    pointer-events: none;
+    z-index: 10000;
+    mix-blend-mode: difference;
+    transition: width 0.3s var(--ease), height 0.3s var(--ease), top 0.3s var(--ease), left 0.3s var(--ease);
+    will-change: transform;
+}
+
+.space-cursor.hover {
+    width: 48px;
+    height: 48px;
+    top: -24px;
+    left: -24px;
+    background: rgba(0, 168, 79, 0.25);
+    border: 1.5px solid var(--accent);
+}
+
+.space-cursor-trail {
+    position: fixed;
+    top: -3px;
+    left: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: calc(0.45 - var(--i) * 0.05);
+    pointer-events: none;
+    z-index: 9999;
+    will-change: transform;
+}
+
+@media (pointer: coarse) {
+    html, body, a, button { cursor: auto; }
+    .space-cursor, .space-cursor-trail { display: none; }
+}
+
+/* ---------- Page Transitions ---------- */
+.page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9990;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease);
+}
+
+.page-transition-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.snap-container,
+#tela {
+    opacity: 1;
+    transition: opacity 0.7s var(--ease);
+}
+
+body.page-leaving .snap-container,
+body.page-leaving #tela {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+/* ============================================================
+   SNAP-SCROLL INDEX PAGE
+   ============================================================ */
+
+.snap-container {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.snap-section {
     min-height: 100vh;
     min-height: 100dvh;
-    width: 100%;
-    max-width: 100%;
-
-    margin: 0 auto;
-    padding: 24px 16px;
-    gap: 20px;
-
-    background-image:
-        radial-gradient(ellipse at top, rgba(50, 80, 160, 0.35) 0%, transparent 55%),
-        radial-gradient(ellipse at bottom, rgba(34, 7, 105, 0.35) 0%, transparent 60%),
-        url(imagens/fundo_degrade_estrelas-1500.png);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center center;
-    background-attachment: fixed;
-    background-color: #0a0e27;
-
-    color: #ffffff;
-}
-
-/* ---------- Logo ---------- */
-#logo {
-    padding: 8px;
-    max-width: 100%;
-    height: auto;
-    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.5));
-    animation: fadeIn 0.7s ease-out;
-}
-
-/* ---------- Menu inicial (index.html) ---------- */
-.menu_inicial {
+    scroll-snap-align: start;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 18px;
-    flex-grow: 1;
+    position: relative;
+    padding: 40px 24px;
+    gap: 8px;
+}
+
+/* Section content reveal */
+.snap-section .section-content {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+}
+
+.snap-section.active .section-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.snap-section.active .section-content:nth-child(2) { transition-delay: 0.1s; }
+.snap-section.active .section-content:nth-child(3) { transition-delay: 0.2s; }
+.snap-section.active .section-content:nth-child(4) { transition-delay: 0.3s; }
+
+/* Section backgrounds */
+.snap-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.snap-section > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ---------- Section: Hero ---------- */
+.section-hero::before {
+    background:
+        radial-gradient(ellipse at 50% 30%, rgba(0, 168, 79, 0.04) 0%, transparent 50%),
+        radial-gradient(1px 1px at 20% 40%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1.5px 1.5px at 80% 70%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,0.3), transparent);
+}
+
+.hero-logo {
+    max-width: 260px;
+    height: auto;
+    filter: drop-shadow(0 0 60px rgba(0, 168, 79, 0.08));
+    margin-bottom: 24px;
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(18px, 5.5vw, 56pt);
+    letter-spacing: 0;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.3;
+    margin-bottom: 16px;
+    padding: 0 20px;
+}
+
+.hero-subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: clamp(9pt, 2vw, 12pt);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 48px;
+}
+
+.scroll-indicator {
+    position: absolute;
+    bottom: 32px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.scroll-indicator::after {
+    content: '';
+    width: 1px;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+    animation: scrollLine 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+@keyframes scrollLine {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+/* ---------- Section: Generic ---------- */
+.section-number {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(60pt, 15vw, 120pt);
+    color: rgba(255, 255, 255, 0.03);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    letter-spacing: -5px;
+}
+
+.section-label {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(28pt, 7vw, 52pt);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 20px;
+    line-height: 1.1;
+}
+
+.section-desc {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: clamp(11pt, 2.5vw, 14pt);
+    line-height: 1.8;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 480px;
+    margin-bottom: 36px;
+}
+
+/* ---------- Explore Button ---------- */
+.btn-explore {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 100px;
+    padding: 16px 40px;
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s var(--ease);
+}
+
+.btn-explore::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform: translateY(100%);
+    transition: transform 0.4s var(--ease);
+    z-index: -1;
+}
+
+.btn-explore:hover {
+    color: var(--bg);
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+}
+
+.btn-explore:hover::before {
+    transform: translateY(0);
+}
+
+/* ---------- Side Navigation Dots ---------- */
+.nav-dots {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 100;
+}
+
+.nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    cursor: none;
+    transition: all 0.3s var(--ease);
+    position: relative;
+}
+
+.nav-dot.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.nav-dot:hover {
+    border-color: var(--accent);
+    transform: scale(1.3);
+}
+
+/* ---------- Marquee ---------- */
+.marquee-wrap {
+    width: 100%;
+    overflow: hidden;
+    position: absolute;
+    bottom: 80px;
+    opacity: 0.06;
+    pointer-events: none;
+}
+
+.marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 30s linear infinite;
+}
+
+.marquee-track span {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(40pt, 10vw, 80pt);
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-right: 80px;
+    letter-spacing: 8px;
+}
+
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   SUB-PAGES (comece_aqui, modelos_3d, saiba_mais, voo360)
+   ============================================================ */
+
+/* ---------- Container ---------- */
+#tela {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    padding: 60px 24px;
+    gap: 36px;
+    position: relative;
+}
+
+/* ---------- Starfield (generated via JS) ---------- */
+.starfield {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.star-layer {
+    position: absolute;
+    top: -20%;
+    left: 0;
+    width: 100%;
+    height: 140%;
+    will-change: transform;
+    transition: transform 0.1s linear;
+}
+
+.star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.4); }
+}
+
+/* ---------- Space Decor (planets + rockets) ---------- */
+.spacedecor {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+/* =========================================================
+   SOLAR-SYSTEM PLANETS (named cartoon planets + orbiting moons)
+   Transform-collision safe nesting:
+     .decor-planet  -> wrapper: positioning + decor-drift (one transform)
+       .planet-body -> gradient sphere (no transform/animation)
+       .planet-ring -> Saturn ring (one STATIC rotate, on its own element)
+       .moon-orbit  -> owns the orbital rotate animation (one transform)
+         .moon      -> offset child; opacity-only depth cue (no transform)
+   All sizing flows from --psize (set inline by JS).
+   ========================================================= */
+
+/* ---- The system anchor: a zero-size point centred in the viewport.
+   Low opacity keeps it legible behind hero text on a full-viewport layout. ---- */
+.solar-system {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    opacity: 0.5;
+}
+
+/* ---- The sun: warm glowing core at the centre. ---- */
+.sun {
+    position: absolute;
+    width: 6vmin;
+    height: 6vmin;
+    left: -3vmin;
+    top: -3vmin;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, #fff6d8 0%, #ffd766 45%, #ff9b2f 80%, #e0701a 100%);
+    box-shadow:
+        0 0 4vmin rgba(255, 196, 92, 0.55),
+        0 0 9vmin rgba(255, 150, 50, 0.30);
+    animation: sun-pulse 6s ease-in-out infinite;
+}
+
+/* ---- An orbit ring: a box of diameter 2*--r centred on the sun that
+   revolves; the planet pinned to its top edge therefore circles the sun.
+   --r / --period / --phase are set inline by JS and cascade to the planet. ---- */
+.orbit {
+    position: absolute;
+    width: calc(var(--r) * 2);
+    height: calc(var(--r) * 2);
+    left: calc(var(--r) * -1);
+    top: calc(var(--r) * -1);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.05);   /* faint orbit line */
+    will-change: transform;
+    animation: orbit-spin var(--period) linear infinite;
+    animation-delay: var(--phase);
+}
+
+/* ---- The planet, pinned to the top of its orbit box. It counter-rotates
+   on the SAME period+phase so it stays upright (and its moons/ring read
+   correctly). One transform per element — collision-safe. ---- */
+.decor-planet {
+    position: absolute;
+    width: var(--psize, 48px);
+    height: var(--psize, 48px);
+    will-change: transform;
+}
+
+.orbit > .decor-planet {
+    left: 50%;
+    top: 0;
+    margin-left: calc(var(--psize) / -2);
+    margin-top: calc(var(--psize) / -2);
+    animation: orbit-counter var(--period) linear infinite;
+    animation-delay: var(--phase);
+}
+
+@keyframes orbit-spin    { to { transform: rotate(360deg);  } }
+@keyframes orbit-counter { to { transform: rotate(-360deg); } }
+@keyframes sun-pulse {
+    0%, 100% { box-shadow: 0 0 4vmin rgba(255,196,92,0.55), 0 0 9vmin rgba(255,150,50,0.30); }
+    50%      { box-shadow: 0 0 5vmin rgba(255,196,92,0.70), 0 0 12vmin rgba(255,150,50,0.40); }
+}
+
+/* The actual sphere. Keeps the original inset-shadow shading. */
+.decor-planet .planet-body {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    z-index: 1;
+    box-shadow:
+        inset -4px -4px 8px rgba(0, 0, 0, 0.45),
+        0 0 12px rgba(0, 0, 0, 0.3);
+    /* default / fallback "home world" accent tint */
+    background: radial-gradient(circle at 32% 28%, #1fd66b, #04632f 78%);
+}
+
+/* ---- MERCURY : small grey-brown cratered rock ---- */
+.planet--mercury .planet-body {
+    background:
+        radial-gradient(circle at 64% 32%, rgba(0,0,0,0.20) 0 7%, rgba(0,0,0,0) 9%),
+        radial-gradient(circle at 38% 60%, rgba(0,0,0,0.18) 0 6%, rgba(0,0,0,0) 8%),
+        radial-gradient(circle at 36% 30%, #b3a89c, #6b5f54 84%);
+}
+
+/* ---- EARTH : blue ocean + layered green continents + polar hint ---- */
+.planet--earth .planet-body {
+    background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.35), rgba(255,255,255,0) 30%),
+        radial-gradient(ellipse 38% 30% at 64% 38%, #2faa55 0 60%, rgba(47,170,85,0) 62%),
+        radial-gradient(ellipse 30% 42% at 30% 64%, #3bbf63 0 58%, rgba(59,191,99,0) 60%),
+        radial-gradient(ellipse 22% 16% at 72% 72%, #2a9b4d 0 60%, rgba(42,155,77,0) 62%),
+        radial-gradient(circle at 38% 30%, #5db4ff, #1d5fa6 80%);
+}
+
+/* ---- MARS : rust / orange with a dusty pole ---- */
+.planet--mars .planet-body {
+    background:
+        radial-gradient(circle at 30% 22%, rgba(255,210,170,0.4), rgba(255,210,170,0) 32%),
+        radial-gradient(ellipse 40% 22% at 50% 12%, rgba(240,225,210,0.55) 0 55%, rgba(240,225,210,0) 60%),
+        radial-gradient(ellipse 26% 20% at 38% 60%, #9c3415 0 55%, rgba(156,52,21,0) 58%),
+        radial-gradient(circle at 36% 30%, #ff8a4d, #a33b1e 82%);
+}
+
+/* ---- JUPITER : horizontal bands + Great Red Spot ---- */
+.planet--jupiter .planet-body {
+    background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.30), rgba(255,255,255,0) 30%),
+        radial-gradient(ellipse 18% 12% at 66% 62%, #c5482b 0 55%, rgba(197,72,43,0) 60%),
+        linear-gradient(
+            to bottom,
+            #d8b48a 0 12%,
+            #b98a5c 12% 22%,
+            #e6cda6 22% 34%,
+            #a9744a 34% 44%,
+            #e3c79e 44% 56%,
+            #b07d52 56% 66%,
+            #ecd6b0 66% 78%,
+            #bd9265 78% 88%,
+            #d8b48a 88% 100%
+        );
+}
+
+/* ---- SATURN : pale gold body (ring is a separate element) ---- */
+.planet--saturn .planet-body {
+    background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.30), rgba(255,255,255,0) 32%),
+        linear-gradient(
+            to bottom,
+            #e9d9a8 0 30%,
+            #d8c187 30% 50%,
+            #ecdcab 50% 70%,
+            #d2b97e 70% 100%
+        );
+}
+
+/* ---- NEPTUNE : deep blue with faint band ---- */
+.planet--neptune .planet-body {
+    background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.28), rgba(255,255,255,0) 32%),
+        radial-gradient(ellipse 22% 14% at 40% 58%, rgba(255,255,255,0.18) 0 55%, rgba(255,255,255,0) 58%),
+        radial-gradient(circle at 38% 30%, #4f7fe0, #1b2f8f 84%);
+}
+
+/* ---- URANUS : pale ice cyan ---- */
+.planet--uranus .planet-body {
+    background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.32), rgba(255,255,255,0) 34%),
+        radial-gradient(circle at 38% 32%, #b8f0ee, #4aa9c9 84%);
+}
+
+/* ---- VENUS : creamy yellow, soft cloud swirl ---- */
+.planet--venus .planet-body {
+    background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,0.4), rgba(255,255,255,0) 34%),
+        radial-gradient(ellipse 36% 18% at 60% 50%, rgba(214,170,96,0.5) 0 55%, rgba(214,170,96,0) 58%),
+        radial-gradient(circle at 38% 30%, #f6e2a8, #caa06b 84%);
+}
+
+/* ---- MOON : grey body + crater dots ---- */
+.planet--moon .planet-body {
+    background:
+        radial-gradient(circle at 62% 30%, rgba(0,0,0,0.18) 0 6%, rgba(0,0,0,0) 8%),
+        radial-gradient(circle at 40% 56%, rgba(0,0,0,0.22) 0 5%, rgba(0,0,0,0) 7%),
+        radial-gradient(circle at 70% 66%, rgba(0,0,0,0.16) 0 4%, rgba(0,0,0,0) 6%),
+        radial-gradient(circle at 30% 34%, rgba(0,0,0,0.14) 0 4%, rgba(0,0,0,0) 6%),
+        radial-gradient(circle at 36% 30%, #d2d6dd, #565d6b 84%);
+}
+
+/* ---- SATURN RING : static tilted ellipse child (one static transform) ---- */
+.decor-planet .planet-ring {
+    position: absolute;
+    left: -34%;
+    top: 36%;
+    width: 168%;
+    height: 30%;
+    border-radius: 50%;
+    border: 2px solid rgba(233, 217, 168, 0.45);
+    box-shadow: inset 0 0 0 3px rgba(233, 217, 168, 0.12);
+    transform: rotate(-20deg);   /* static tilt; one transform on its own element */
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* ---- MOONS : the orbit element owns the rotate; the moon is an offset
+   child so it actually circles. Moon's own animation is opacity ONLY,
+   so it never competes for a transform (avoids the collision rule). ---- */
+.decor-planet .moon-orbit {
+    position: absolute;
+    /* orbit box larger than the planet; --orbit is a fraction (e.g. 0.40). */
+    inset: calc(var(--orbit, 0.40) * -100%);
+    z-index: 2;                  /* above the body; depth-cue opacity sells "behind" */
+    will-change: transform;
+    animation: moon-orbit-spin linear infinite;  /* duration set inline by JS */
+    pointer-events: none;
+}
+
+.decor-planet .moon-orbit.reverse {
+    animation-direction: reverse;
+}
+
+.decor-planet .moon-orbit .moon {
+    position: absolute;
+    top: 50%;
+    left: 0;                     /* sits on the orbit ring; parent rotation carries it */
+    width: 22%;                  /* relative to orbit box */
+    height: 22%;
+    margin-top: -11%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 36% 30%, #e6e8ec, #7c828e 82%);
+    box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.4);
+    will-change: opacity;
+    /* depth cue: dim across the back arc so it reads as passing behind.
+       opacity ONLY — no transform here, so the parent's rotate is unopposed.
+       period + phase matched to the orbit (set inline by JS). */
+    animation: moon-depth ease-in-out infinite;
+}
+
+/* tiny moonlets for gas giants */
+.decor-planet .moon-orbit--small .moon {
+    width: 14%;
+    height: 14%;
+    margin-top: -7%;
+}
+
+/* accent-tinted moonlet (gas-giant 2nd moon) */
+.decor-planet .moon-orbit .moon.accent {
+    background: radial-gradient(circle at 35% 30%, #5fe6a0, var(--accent, #00a84f) 72%, #035e2c 100%);
+    box-shadow:
+        inset -1px -1px 2px rgba(0, 0, 0, 0.45),
+        0 0 4px var(--accent-glow, rgba(0, 168, 79, 0.35));
+}
+
+@keyframes moon-orbit-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Moon starts at 9 o'clock (left:0); the back-of-planet pass happens around
+   the 50% mark of the spin, so dim there. opacity only — no transform. */
+@keyframes moon-depth {
+    0%   { opacity: 1; }
+    35%  { opacity: 0.9; }
+    50%  { opacity: 0.3; }   /* deepest = behind the planet */
+    65%  { opacity: 0.9; }
+    100% { opacity: 1; }
+}
+
+/* =========================================================
+   ROCKETS — constant cross-viewport flight (looping) + click boost
+   Transform-collision safe nesting:
+     .decor-rocket  -> wrapper: cross-screen TRAVEL transform + lane vars
+       .rocket-craft-> BOB/SWAY transform (separate element)
+         svg        -> STATIC nose rotation (--nose), no animation
+           .rocket-flame / .rocket-trail -> opacity + scaleY only
+   ========================================================= */
+
+.decor-rocket {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.78;
+    will-change: transform;
+    /* Lane variables (overridden inline per-rocket by JS) */
+    --tx-from: -12vw; --ty-from: 70vh;
+    --tx-to:   112vw; --ty-to:   18vh;
+    --dur: 26s;
+    animation: rocket-travel var(--dur) linear infinite;
+}
+
+/* Boost: click/tap temporarily speeds the same path up + lifts opacity. */
+.decor-rocket.boosting {
+    --dur: 9s;
+    opacity: 1;
+}
+
+/* Mid layer: owns the natural BOB / SWAY transform. */
+.rocket-craft {
+    will-change: transform;
+    animation: rocket-bob 3.4s ease-in-out infinite alternate;
+}
+
+/* Inner SVG: STATIC nose rotation only (set by JS via --nose). */
+.decor-rocket svg {
+    display: block;
+    transform: rotate(var(--nose, 90deg));
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.35));
+    transition: filter 0.3s var(--ease);
+}
+.decor-rocket:hover svg,
+.decor-rocket.boosting svg {
+    filter: drop-shadow(0 0 7px var(--accent-glow));
+}
+
+/* Exhaust flame: own element, animates opacity + scaleY out the back. */
+.rocket-flame {
+    transform-origin: 12px 18px;
+    transform-box: fill-box;
+    animation: rocket-flame-flicker 0.22s steps(2, jump-none) infinite alternate;
+}
+.decor-rocket.boosting .rocket-flame {
+    animation-duration: 0.12s;
+}
+
+/* Faint exhaust trail: pure opacity/scaleY pulse — cheap. */
+.rocket-trail {
+    transform-origin: 12px 20px;
+    transform-box: fill-box;
+    animation: rocket-trail-pulse 0.5s ease-in-out infinite alternate;
+}
+.decor-rocket.boosting .rocket-trail {
+    transform: scaleY(1.6);
+}
+
+/* Travel: edge-to-edge across the viewport, looping. The 50% mid-screen
+   frame parks a reduced-motion-frozen rocket roughly on-screen. */
+@keyframes rocket-travel {
+    0%   { transform: translate(var(--tx-from), var(--ty-from)); }
+    50%  { transform: translate(
+               calc((var(--tx-from) + var(--tx-to)) / 2),
+               calc((var(--ty-from) + var(--ty-to)) / 2)); }
+    100% { transform: translate(var(--tx-to), var(--ty-to)); }
+}
+
+/* Natural bob/sway on the craft. */
+@keyframes rocket-bob {
+    from { transform: translate(-2px, 3px) rotate(-2.5deg); }
+    to   { transform: translate(2px, -3px) rotate(2.5deg); }
+}
+
+/* Flame flicker (opacity + length only). */
+@keyframes rocket-flame-flicker {
+    from { opacity: 0.55; transform: scaleY(0.7); }
+    to   { opacity: 1;    transform: scaleY(1.15); }
+}
+
+/* Faint trail pulse. */
+@keyframes rocket-trail-pulse {
+    from { opacity: 0.10; transform: scaleY(0.85); }
+    to   { opacity: 0.30; transform: scaleY(1.25); }
+}
+
+#tela > * { position: relative; z-index: 1; }
+#tela { position: relative; }
+
+/* ---------- Scroll Reveal ---------- */
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+
+[data-reveal].revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ---------- Logo ---------- */
+#logo {
+    max-width: 180px;
+    height: auto;
+    filter: drop-shadow(0 0 30px rgba(0, 168, 79, 0.08));
+}
+
+/* ---------- Bloco Texto ---------- */
+#bloco-texto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 560px;
+    padding: 44px 36px;
+    gap: 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.titulo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(22pt, 5.5vw, 38pt);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--text);
+}
+
+.titulo::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 2px;
+    background: var(--accent);
+    margin: 14px auto 0;
+}
+
+.texto {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: clamp(12pt, 2.5vw, 15pt);
+    line-height: 1.8;
+    color: var(--text);
+    text-align: left;
+    width: 100%;
+    max-width: 480px;
+}
+
+.texto-menor {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: clamp(10pt, 2vw, 12pt);
+    line-height: 1.6;
+    color: var(--text-muted);
+    width: 100%;
+    max-width: 480px;
+}
+
+/* ---------- Navigation Buttons ---------- */
+.menu_inicial {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
     width: 100%;
     max-width: 400px;
-    animation: fadeInUp 0.6s ease-out;
 }
 
 .menu_inicial a {
@@ -97,166 +929,92 @@ body {
 }
 
 .botao_menu_inicial {
-    font-family: "Ubuntu-B", sans-serif;
-    font-size: clamp(18pt, 4vw, 24pt);
-    color: #ffffff;
-
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1.5px solid rgba(255, 255, 255, 0.22);
-    border-radius: 14px;
-
-    padding: 14px 20px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(14pt, 3vw, 20pt);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 28px;
     width: 100%;
-    line-height: 1.4em;
-    cursor: pointer;
-
-    transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    transition: all 0.4s var(--ease);
 }
 
 .botao_menu_inicial:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.55);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 28px rgba(125, 211, 252, 0.18);
-}
-
-.botao_menu_inicial:active {
-    transform: translateY(0);
-    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+    padding-left: 36px;
+    box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(0,0,0,0.3);
 }
 
 #botao_linha_do_tempo {
-    font-family: "Ubuntu-B", sans-serif;
-    font-size: clamp(18pt, 4vw, 24pt);
-    color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1.5px dashed rgba(255, 255, 255, 0.18);
-    border-radius: 14px;
-    padding: 14px 20px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(14pt, 3vw, 20pt);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px dashed rgba(255,255,255,0.08);
+    border-radius: var(--radius);
+    padding: 20px 28px;
     width: 100%;
-    line-height: 1.4em;
     cursor: not-allowed;
 }
 
-/* ---------- Card de conteúdo (bloco-texto) ---------- */
-#bloco-texto {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    align-items: center;
-
-    width: 100%;
-    max-width: 480px;
-
-    margin-top: 12px;
-    padding: 28px 22px;
-    gap: 16px;
-
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 22px;
-
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-    animation: fadeInUp 0.5s ease-out;
-}
-
-.texto {
-    text-align: justify;
-    font-family: "Ubuntu-M", sans-serif;
-    font-size: clamp(14pt, 3vw, 18pt);
-    width: 100%;
-    max-width: 400px;
-    line-height: 1.4em;
-    color: rgba(255, 255, 255, 0.92);
-}
-
-.texto-menor {
-    font-family: "Ubuntu-M", sans-serif;
-    font-size: clamp(11pt, 2.5vw, 13pt);
-    width: 100%;
-    max-width: 400px;
-    line-height: 1.3em;
-    color: rgba(255, 255, 255, 0.75);
-}
-
-.titulo {
-    text-align: center;
-    font-size: clamp(22pt, 5vw, 30pt);
-    font-family: "Ubuntu-B", sans-serif;
-    color: #ffffff;
-    letter-spacing: 1.5px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-}
-
-/* ---------- Navegação inferior ---------- */
 .menu_navegacao {
     display: flex;
-    flex-direction: row;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 12px;
-
+    gap: 14px;
     width: 100%;
-    max-width: 550px;
-    padding: 8px;
+    max-width: 500px;
+    padding: 16px 0;
 }
 
 .menu_navegacao a {
     text-decoration: none;
-    flex: 1 1 180px;
-    max-width: 260px;
+    flex: 1 1 160px;
+    max-width: 240px;
 }
 
 .botao_menu_navegacao {
-    font-family: "Ubuntu-B", sans-serif;
-    font-size: clamp(14pt, 3vw, 20pt);
-    color: #ffffff;
-
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1.5px solid rgba(255, 255, 255, 0.22);
-    border-radius: 12px;
-
-    padding: 10px 16px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(11pt, 2.2vw, 14pt);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
     width: 100%;
-    line-height: 1.4em;
-    cursor: pointer;
-
-    transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.35s var(--ease);
 }
 
 .botao_menu_navegacao:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .botao_menu_navegacao:active {
-    transform: translateY(0);
-    background: rgba(255, 255, 255, 0.08);
+    transform: scale(0.97);
 }
 
-/* ---------- Bloco do modelo 3D (modelos_3d) ---------- */
+/* ---------- 3D Model Block ---------- */
 #bloco-modelo {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     width: 100%;
-    max-width: 420px;
-    height: 400px;
+    max-width: 480px;
+    height: 420px;
     overflow: hidden !important;
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 16px 56px rgba(0,0,0,0.5);
 }
 
 model-viewer {
@@ -265,7 +1023,7 @@ model-viewer {
     --poster-color: transparent;
 }
 
-/* ---------- Links externos ---------- */
+/* ---------- External Links ---------- */
 #bloco-link {
     display: flex;
     justify-content: center;
@@ -273,52 +1031,46 @@ model-viewer {
 }
 
 #link {
-    font-size: clamp(16pt, 3.5vw, 22pt);
-    font-family: "Ubuntu-M", sans-serif;
-    color: #7dd3fc;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: clamp(13pt, 2.8vw, 17pt);
+    color: var(--accent);
     text-decoration: none;
     position: relative;
-    transition: color 0.2s;
+    transition: color 0.3s var(--ease);
 }
 
-#link::before {
+#link::after {
     content: '';
     position: absolute;
-    width: 100%;
-    height: 2px;
-    border-radius: 2px;
-    background-color: #7dd3fc;
-    bottom: -2px;
+    bottom: -4px;
     left: 0;
-    transform-origin: right;
+    width: 100%;
+    height: 1px;
+    background: var(--accent);
     transform: scaleX(0);
-    transition: transform 0.3s ease-in-out;
+    transform-origin: right;
+    transition: transform 0.4s var(--ease);
 }
 
-#link:hover {
-    color: #bae6fd;
-}
+#link:hover { color: #66ffaa; }
+#link:hover::after { transform: scaleX(1); transform-origin: left; }
 
-#link:hover::before {
-    transform-origin: left;
-    transform: scaleX(1);
-}
-
-/* ---------- Bloco de Realidade Aumentada (voo360) ---------- */
+/* ---------- Voo360 / AR Block ---------- */
 #bloco-ra {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
     width: 100%;
-    max-width: 720px;
-    height: min(90vh, 720px);
-    background: rgba(255, 255, 255, 0.96);
-    outline: 3px solid #220769;
-    border-radius: 20px;
+    max-width: 780px;
+    height: min(88vh, 720px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(34, 7, 105, 0.3);
+    box-shadow: 0 20px 80px rgba(0,0,0,0.6);
 }
 
 #model-viewer-ra,
@@ -332,18 +1084,21 @@ canvas.threejs {
 
 .titulo-ra {
     text-align: center;
-    color: #220769;
-    font-size: clamp(20pt, 4.5vw, 28pt);
-    font-family: "Ubuntu-B", sans-serif;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(13pt, 3vw, 18pt);
+    letter-spacing: 4px;
+    text-transform: uppercase;
     position: absolute;
     top: 24px;
     z-index: 2;
-    padding: 6px 18px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 10px;
-    letter-spacing: 1px;
+    padding: 10px 24px;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
 }
 
 .menu_animacao {
@@ -359,89 +1114,122 @@ canvas.threejs {
 }
 
 .botao_animacao {
-    font-family: "Ubuntu-B", sans-serif;
-    font-size: clamp(12pt, 2.5vw, 16pt);
-    background: #220769;
-    border: none;
-    color: white;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(10pt, 2vw, 13pt);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 10px 18px;
-    min-width: 150px;
-    line-height: 1.5em;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 12px rgba(34, 7, 105, 0.45);
+    padding: 12px 24px;
+    min-width: 160px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s var(--ease);
 }
 
-.botao_animacao:hover {
-    background: #2e0b8a;
+.botao_animacao:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 8px 24px rgba(0,0,0,0.4);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(34, 7, 105, 0.65);
 }
 
-.botao_animacao:active {
-    transform: translateY(0);
-    background: #1a054f;
+.botao_animacao:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
 }
 
-/* ---------- Animações ---------- */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+.botao_animacao.ativo {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 4px 20px var(--accent-glow);
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(18px);
+.botao_animacao:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: clamp(18px, 5vw, 28pt);
+        letter-spacing: 0;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    .hero-subtitle {
+        letter-spacing: 3px;
+        font-size: 9px;
     }
+    .hero-logo { max-width: 180px; }
+    .section-title { font-size: clamp(20pt, 7vw, 32pt); }
+    .section-desc {
+        font-size: 12pt;
+        padding: 0 12px;
+    }
+    .section-number {
+        font-size: clamp(50pt, 20vw, 90pt);
+    }
+    .snap-section { padding: 32px 20px; }
+    .nav-dots { right: 12px; gap: 10px; }
+    .nav-dot { width: 8px; height: 8px; }
+    .btn-explore {
+        padding: 14px 32px;
+        font-size: 10px;
+    }
+    .marquee-wrap { bottom: 60px; }
+    .marquee-track span {
+        font-size: clamp(30pt, 10vw, 50pt);
+        padding-right: 40px;
+    }
+    .scroll-indicator { bottom: 20px; font-size: 8px; }
 }
 
-/* ---------- Responsividade ---------- */
 @media (max-width: 520px) {
-    #tela {
-        padding: 16px 12px;
-        gap: 14px;
-    }
-    #bloco-texto {
-        padding: 22px 16px;
-    }
-    #bloco-modelo {
-        height: 340px;
-    }
-    .menu_navegacao a {
-        flex: 1 1 100%;
-    }
+    #tela { padding: 32px 16px; gap: 24px; }
+    #bloco-texto { padding: 24px 16px; max-width: 100%; }
+    #bloco-modelo { height: 300px; max-width: 100%; }
+    .menu_navegacao { padding: 12px 0; }
+    .menu_navegacao a { flex: 1 1 100%; max-width: 100%; }
+    .botao_menu_navegacao { font-size: 10pt; padding: 12px 16px; }
+    #logo { max-width: 120px; }
+    .hero-logo { max-width: 150px; }
+    .hero-title { font-size: clamp(16px, 5vw, 22pt); letter-spacing: 0; }
+    .section-title { font-size: clamp(16pt, 6vw, 24pt); letter-spacing: 1px; }
+    .section-desc { font-size: 11pt; line-height: 1.6; padding: 0 8px; }
+    .snap-section { padding: 24px 20px; }
+    .nav-dots { display: none; }
+    .titulo { font-size: clamp(16pt, 5vw, 24pt); letter-spacing: 1px; }
+    .texto { font-size: 11pt; line-height: 1.6; }
+    #bloco-ra { max-width: 100%; height: min(80vh, 600px); }
+    .titulo-ra { font-size: 10pt; letter-spacing: 2px; padding: 8px 16px; }
+    .menu_animacao { margin-top: -180px; height: 180px; }
+    .botao_animacao { font-size: 9pt; padding: 10px 18px; min-width: 130px; }
 }
 
 @media (max-width: 360px) {
     .botao_menu_inicial,
-    .botao_menu_navegacao {
-        font-size: 16pt;
-        padding: 12px 14px;
-    }
-    .titulo {
-        font-size: 20pt;
-    }
+    .botao_menu_navegacao { font-size: 12pt; padding: 14px 16px; }
+    .titulo { font-size: 20pt; }
+    .hero-title { font-size: 14pt; }
+    .hero-logo { max-width: 120px; }
 }
 
-@media (min-width: 768px) {
-    #tela {
-        padding: 40px 24px;
-    }
+@media (min-width: 769px) {
+    #tela { padding: 80px 40px; }
 }
 
-/* ---------- Respeita preferência de "reduzir movimento" ---------- */
+/* ---------- Reduced Motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+    .snap-container { scroll-snap-type: none; }
+    .snap-section .section-content { opacity: 1; transform: none; }
+    [data-reveal] { opacity: 1; transform: none; }
+    #tela::before { display: none; }
 }

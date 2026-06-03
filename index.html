@@ -1,34 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title> SPACE - Página Inicial </title>
-        <link rel="shortcut icon" href="imagens/logo-space.ico" type="image/x-icon">
-        <link rel="stylesheet" href="style.css">
-        <style>
-        </style>
-    </head>
-    <body>
-        <div id="tela">
-            <div><img src="imagens/logo-space-350.png" alt="Logo SPACE" id="logo"></div>
-            <div class="menu_inicial">
-                <a href="comece_aqui/comece_aqui_1.html" target="_self" rel="next">
-                    <button class="botao_menu_inicial">COMECE AQUI</button>
-                </a>
-                <a href="modelos_3d/modelos_3d_1.html" target="_self" rel="next">
-                    <button class="botao_menu_inicial">MODELOS 3D</button>
-                </a>
-                <a href="voo360/voo360_1.html" target="_self" rel="next">
-                    <button class="botao_menu_inicial">VOO 360</button>
-                </a>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPACE — Conquistando o Espaço</title>
+    <link rel="shortcut icon" href="imagens/logo-space.ico" type="image/x-icon">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation dots -->
+    <nav class="nav-dots" aria-label="Navegação por seções">
+        <div class="nav-dot active" data-section="0"></div>
+        <div class="nav-dot" data-section="1"></div>
+        <div class="nav-dot" data-section="2"></div>
+        <div class="nav-dot" data-section="3"></div>
+        <div class="nav-dot" data-section="4"></div>
+    </nav>
 
-                    
-                
-                <a href="saiba_mais/saiba_mais_1.html" target="_self" rel="next">
-                    <button class="botao_menu_inicial">SAIBA MAIS</button>
-                </a>
+    <div class="snap-container">
+        <!-- SECTION 0: Hero -->
+        <section class="snap-section section-hero active">
+            <img src="imagens/logo-space-350.png" alt="Logo SPACE" class="section-content hero-logo" data-parallax="1.2">
+            <h1 class="section-content hero-title">CONQUISTANDO<br>O<br>ESPAÇO</h1>
+            <p class="section-content hero-subtitle">Exposição Virtual Aeroespacial</p>
+            <div class="scroll-indicator section-content">SCROLL</div>
+
+            <div class="marquee-wrap">
+                <div class="marquee-track">
+                    <span>SPACE</span><span>UFABC</span><span>AEROESPACIAL</span><span>CONQUISTA</span>
+                    <span>SPACE</span><span>UFABC</span><span>AEROESPACIAL</span><span>CONQUISTA</span>
+                </div>
             </div>
-        </div>
-    </body>
+        </section>
+
+        <!-- SECTION 1: Comece Aqui -->
+        <section class="snap-section">
+            <span class="section-number">01</span>
+            <span class="section-content section-label">Introdução</span>
+            <h2 class="section-content section-title">COMECE AQUI</h2>
+            <p class="section-content section-desc">Descubra a história e evolução do setor aeroespacial através de uma experiência interativa com modelagem 3D e realidade aumentada.</p>
+            <a href="comece_aqui/comece_aqui_1.html" class="section-content btn-explore">EXPLORAR</a>
+        </section>
+
+        <!-- SECTION 2: Modelos 3D -->
+        <section class="snap-section">
+            <span class="section-number">02</span>
+            <span class="section-content section-label">Galeria Interativa</span>
+            <h2 class="section-content section-title">MODELOS 3D</h2>
+            <p class="section-content section-desc">Do 14-Bis à Estação Espacial Internacional. Navegue pelos marcos da aviação e da exploração espacial em modelos tridimensionais.</p>
+            <a href="modelos_3d/modelos_3d_1.html" class="section-content btn-explore">EXPLORAR</a>
+        </section>
+
+        <!-- SECTION 3: Voo 360 -->
+        <section class="snap-section">
+            <span class="section-number">03</span>
+            <span class="section-content section-label">Simulação</span>
+            <h2 class="section-content section-title">VOO 360</h2>
+            <p class="section-content section-desc">Entenda como os controles de um avião funcionam. Arfagem, rolamento e guinada — visualize cada movimento em tempo real.</p>
+            <a href="voo360/voo360_1.html" class="section-content btn-explore">EXPLORAR</a>
+        </section>
+
+        <!-- SECTION 4: Saiba Mais -->
+        <section class="snap-section">
+            <span class="section-number">04</span>
+            <span class="section-content section-label">Sobre o Projeto</span>
+            <h2 class="section-content section-title">SAIBA MAIS</h2>
+            <p class="section-content section-desc">Conheça o projeto Conquistando o Espaço, a equipe SPACE UFABC e nossos parceiros institucionais.</p>
+            <a href="saiba_mais/saiba_mais_1.html" class="section-content btn-explore">EXPLORAR</a>
+        </section>
+    </div>
+
+    <script src="js/engine.js"></script>
+    <script>
+        // Snap-scroll section observer
+        const sections = document.querySelectorAll('.snap-section');
+        const dots = document.querySelectorAll('.nav-dot');
+        const container = document.querySelector('.snap-container');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Activate section
+                    sections.forEach(s => s.classList.remove('active'));
+                    entry.target.classList.add('active');
+
+                    // Update dots
+                    const idx = [...sections].indexOf(entry.target);
+                    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+                }
+            });
+        }, { threshold: 0.6, root: container });
+
+        sections.forEach(s => observer.observe(s));
+
+        // Dot click navigation
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const idx = parseInt(dot.dataset.section);
+                sections[idx].scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
 </html>

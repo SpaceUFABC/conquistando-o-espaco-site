@@ -13,7 +13,7 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 
     <div id="tela">
-        <div id="bloco-texto">
+        <div id="bloco-texto" data-reveal>
             <h1 class="titulo">BARÃO VERMELHO</h1>
             <div id="bloco-modelo" style="overflow: hidden;">
                 <model-viewer 
@@ -34,7 +34,7 @@
             </div>
             <p class="texto">O avião Fokker 1 ficou famoso ao ser pilotado pelo "Barão Vermelho" na Primeira Guerra Mundial, em 1916.</p>
         </div>
-        <div class="menu_navegacao">
+        <div class="menu_navegacao" data-reveal data-reveal-delay="0.2">
             <a href="../modelos_3d/modelos_3d_1.html" target="_self" rel="next">
                 <button class="botao_menu_navegacao">VOLTAR</button>
             </a>
@@ -46,5 +46,6 @@
             </a>
         </div>
     </div>
+    <script src="../js/engine.js"></script>
 </body>
 </html>

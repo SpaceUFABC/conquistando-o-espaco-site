@@ -13,7 +13,7 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 
     <div id="tela">
-        <div id="bloco-texto">
+        <div id="bloco-texto" data-reveal>
             <h1 class="titulo">SONDA I</h1>
             <div id="bloco-modelo" style="overflow: hidden;">
                 <model-viewer 
@@ -34,7 +34,7 @@
             </div>
             <p class="texto">Lançado em 1967, o Sonda I foi o primeiro foguete de sondagem fabricado no Brasil.</p>
         </div>
-        <div class="menu_navegacao">
+        <div class="menu_navegacao" data-reveal data-reveal-delay="0.2">
             <a href="../modelos_3d/modelos_3d_3.html" target="_self" rel="next">
                 <button class="botao_menu_navegacao">VOLTAR</button>
             </a>
@@ -46,5 +46,6 @@
             </a>
         </div>
     </div>
+    <script src="../js/engine.js"></script>
 </body>
 </html>

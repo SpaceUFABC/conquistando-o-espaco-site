@@ -9,19 +9,8 @@
     <style>
         #bloco-ra {
             background:
-                radial-gradient(ellipse 480px 320px at 80% 12%, rgba(255, 230, 180, 0.18) 0%, transparent 70%),
-                radial-gradient(ellipse 320px 90px  at 18% 86%, rgba(255, 255, 255, 0.55) 0%, transparent 72%),
-                radial-gradient(ellipse 460px 110px at 55% 92%, rgba(255, 255, 255, 0.45) 0%, transparent 72%),
-                radial-gradient(ellipse 280px 80px  at 88% 80%, rgba(255, 255, 255, 0.40) 0%, transparent 72%),
-                radial-gradient(ellipse 240px 60px  at 8%  70%, rgba(255, 255, 255, 0.18) 0%, transparent 75%),
-                linear-gradient(to bottom,
-                    #0e1a4a   0%,
-                    #1a2e6e  25%,
-                    #2c4795  55%,
-                    #4d6cb8  78%,
-                    #7a93cf 100%);
-            outline-color: rgba(120, 90, 200, 0.6);
-            box-shadow: 0 12px 40px rgba(34, 7, 105, 0.5);
+                radial-gradient(ellipse 400px 250px at 70% 10%, rgba(0, 168, 79, 0.03) 0%, transparent 60%),
+                linear-gradient(to bottom, #0a0a0a 0%, #111 50%, #141414 100%);
             position: relative;
             overflow: hidden;
         }
@@ -38,19 +27,21 @@
             left: 50%;
             transform: translateX(-50%) translateY(-8px);
             padding: 8px 22px;
-            background: rgba(34, 7, 105, 0.92);
-            border: 1.5px solid rgba(255, 255, 255, 0.45);
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid var(--accent-dim, rgba(0,168,79,0.15));
             border-radius: 24px;
-            color: #ffffff;
-            font-family: "Ubuntu-B", sans-serif;
-            font-size: clamp(10pt, 1.4vw, 13pt);
-            letter-spacing: 1px;
+            color: var(--text, #f0ede8);
+            font-family: var(--font-display, 'Syne', sans-serif);
+            font-weight: 600;
+            font-size: clamp(9pt, 1.3vw, 12pt);
+            letter-spacing: 2px;
+            text-transform: uppercase;
             white-space: nowrap;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.35s ease, transform 0.35s ease;
             z-index: 3;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
         #motion-label.visible {
             opacity: 1;
@@ -60,7 +51,11 @@
             display: inline-block;
             margin-right: 8px;
             vertical-align: middle;
-            animation: spin-arrow 2s linear infinite;
+            animation: spin-arrow 2.5s linear infinite;
+        }
+        #motion-label .axis-icon path,
+        #motion-label .axis-icon polyline {
+            stroke: var(--accent, #00a84f);
         }
         @keyframes spin-arrow {
             from { transform: rotate(0deg); }
@@ -263,6 +258,25 @@
         }
 
         const stopBtn = document.getElementById('botao_parar');
+        const motionButtons = [...buttons].filter(b => b !== stopBtn);
+
+        // While an animation plays, the three motion options vanish and only the
+        // (centered) Stop button is shown — this also stops the menu from
+        // occluding the plane on low-angle views like Guinada.
+        function showStopOnly() {
+            motionButtons.forEach(b => { b.style.display = 'none'; });
+            stopBtn.style.display = '';
+            stopBtn.disabled = false;
+        }
+
+        function showMotionMenu() {
+            motionButtons.forEach(b => {
+                b.style.display = '';
+                b.disabled = false;
+                b.classList.remove('ativo');
+            });
+            stopBtn.style.display = 'none';
+        }
 
         function stopAnimation() {
             if (!activeMotion) return;
@@ -270,11 +284,9 @@
             mv.currentTime = 0;
             motionLabel.classList.remove('visible');
             if (activeMotion.axis === 'roll') resetLeftAileron();
-            activeMotion.btn.classList.remove('ativo');
             activeMotion.bodyDone = true;
             activeMotion = null;
-            buttons.forEach(b => { b.disabled = false; });
-            stopBtn.style.display = 'none';
+            showMotionMenu();
             mv.cameraOrbit = CAMERA_DEFAULT;
         }
 
@@ -306,12 +318,9 @@
                     mv.currentTime = 0;
                     motionLabel.classList.remove('visible');
                     if (activeMotion.axis === 'roll') resetLeftAileron();
-                    stopBtn.style.display = 'none';
-                    const am = activeMotion;
                     setTimeout(() => { mv.cameraOrbit = CAMERA_DEFAULT; }, T_CAM_RETURN_MS);
                     setTimeout(() => {
-                        am.btn.classList.remove('ativo');
-                        buttons.forEach(b => { b.disabled = false; });
+                        showMotionMenu();
                         activeMotion = null;
                     }, T_UNLOCK_MS);
                 } else if (animStillPlaying) {
@@ -343,10 +352,7 @@
                 const motion = MOTIONS[animName];
                 if (!motion) return;
 
-                buttons.forEach(b => { b.classList.remove('ativo'); b.disabled = true; });
-                btn.classList.add('ativo');
-                stopBtn.style.display = '';
-                stopBtn.disabled = false;
+                showStopOnly();
 
                 mv.cameraOrbit = motion.camera;
                 motionText.textContent = motion.label;
@@ -372,5 +378,6 @@
             });
         });
     </script>
+    <script src="../js/engine.js"></script>
 </body>
 </html>
