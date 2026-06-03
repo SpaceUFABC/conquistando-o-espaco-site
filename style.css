@@ -716,14 +716,6 @@ body.page-leaving #tela {
     margin-top: -7%;
 }
 
-/* accent-tinted moonlet (gas-giant 2nd moon) */
-.decor-planet .moon-orbit .moon.accent {
-    background: radial-gradient(circle at 35% 30%, #5fe6a0, var(--accent, #00a84f) 72%, #035e2c 100%);
-    box-shadow:
-        inset -1px -1px 2px rgba(0, 0, 0, 0.45),
-        0 0 4px var(--accent-glow, rgba(0, 168, 79, 0.35));
-}
-
 @keyframes moon-orbit-spin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }

@@ -126,15 +126,22 @@
            Sizes/radii are in vmin so the whole system scales with the
            viewport — no JS resize listener needed.
         ===================================================== */
+        // Periods use REAL relative orbital ratios (sidereal years) scaled by
+        // a single constant k ~= 58.1 s/year, anchored so Mercury = 14s. The
+        // ratios are exact, so Neptune's "year" really is ~685x Mercury's —
+        // which means the outer giants move very slowly (Jupiter ~11min/lap,
+        // Neptune ~160min). That is astronomically faithful, not a bug.
+        // Radii and sizes remain compressed/stylized (true-scale would put
+        // the inner four in one pixel and Neptune off-screen).
         const PLANETS = [
-            { name: 'mercury', size: 1.7, r: 9,  period: 14,  moons: 0, ring: false },
-            { name: 'venus',   size: 2.4, r: 13, period: 20,  moons: 0, ring: false },
-            { name: 'earth',   size: 2.6, r: 17, period: 26,  moons: 1, ring: false },
-            { name: 'mars',    size: 2.0, r: 21, period: 34,  moons: 0, ring: false },
-            { name: 'jupiter', size: 5.6, r: 30, period: 52,  moons: 2, ring: false },
-            { name: 'saturn',  size: 4.9, r: 38, period: 70,  moons: 1, ring: true  },
-            { name: 'uranus',  size: 3.6, r: 44, period: 90,  moons: 0, ring: false },
-            { name: 'neptune', size: 3.5, r: 49, period: 110, moons: 1, ring: false },
+            { name: 'mercury', size: 1.7, r: 9,  period: 14,   moons: 0, ring: false },
+            { name: 'venus',   size: 2.4, r: 13, period: 36,   moons: 0, ring: false },
+            { name: 'earth',   size: 2.6, r: 17, period: 58,   moons: 1, ring: false },
+            { name: 'mars',    size: 2.0, r: 21, period: 109,  moons: 2, ring: false },
+            { name: 'jupiter', size: 5.6, r: 30, period: 690,  moons: 2, ring: false },
+            { name: 'saturn',  size: 4.9, r: 38, period: 1713, moons: 1, ring: true  },
+            { name: 'uranus',  size: 3.6, r: 44, period: 4884, moons: 0, ring: false },
+            { name: 'neptune', size: 3.5, r: 49, period: 9579, moons: 1, ring: false },
         ];
 
         const sys = document.createElement('div');
@@ -184,9 +191,6 @@
 
                     const moon = document.createElement('div');
                     moon.className = 'moon';
-                    if ((p.name === 'jupiter' || p.name === 'saturn') && m === 1) {
-                        moon.classList.add('accent');
-                    }
                     moon.style.animationDuration = dur.toFixed(1) + 's';
                     moon.style.animationDelay = morbit.style.animationDelay;
 
